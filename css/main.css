@@ -1,0 +1,335 @@
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	font-family: Arial, sans-serif;
+}
+
+body {
+	padding: 20px;
+	background-color: #f5f5f5;
+	color: #333;
+}
+
+/* Header with login right */
+header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+}
+
+.login-area {
+	text-align: right;
+}
+
+
+
+.login-form input[type="submit"] {
+	cursor: pointer;
+	background-color: #8B4513;
+	color: white;
+	border: none;
+	border-radius: 3px;
+	transition: background-color 0.3s;
+}
+
+.login-form input[type="submit"]:hover {
+	background-color: #6e3510;
+}
+
+.error {
+	color: red;
+	font-size: 0.85rem;
+	margin-left: 10px;
+}
+
+/* Navigation	 */
+nav {
+	margin-bottom: 20px;
+}
+
+nav a {
+	color: #8B4513;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+nav a:hover {
+	text-decoration: underline;
+}
+
+/* main Layout */
+.content-wrapper {
+	display: flex;
+	gap: 30px;
+}
+
+/* Posts */
+.posts {
+	flex: 3;
+	background-color: white;
+	padding: 15px;
+	border-radius: 6px;
+	box-shadow: 0 0 6px rgba(0,0,0,0.1);
+	overflow-wrap: break-word;
+}
+
+/* individual publications */
+.publishContent {
+	margin-bottom: 20px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid #ddd;
+}
+
+.publishContent h3 {
+	color: #8B4513;
+	margin-bottom: 5px;
+}
+
+.publishContent label {
+	display: block;
+	font-size: 0.85rem;
+	color: #555;
+	margin-bottom: 8px;
+}
+
+.publishContent p {
+	white-space: pre-wrap;
+	font-size: 1rem;
+	line-height: 1.4;
+}
+
+/* Categories */
+.categories {
+	background-color: white;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.1);
+    border-left: 2px solid #8B4513;
+    align-self: flex-start;
+    flex: 1;
+}
+
+.categories h2 {
+	margin-bottom: 15px;
+	color: #8B4513;
+	text-align: center;
+}
+
+.categories div {
+	margin-bottom: 12px;
+	padding: 4px 8px;
+	border-radius: 4px;
+	text-align: center; 
+}
+
+/* selected category */
+.categories div.selectedCategory {
+    border: 2px solid #8B4513;
+}
+
+/* Link within category */
+.categories a {
+	text-decoration: none;
+	color: #8B4513;
+	font-weight: bold;
+	display: inline-block;
+}
+
+.categories a:hover {
+	text-decoration: underline;
+}
+
+/* Logout/dashboard links */
+header p a {
+	color: #8B4513;
+	text-decoration: none;
+	margin-left: 10px;
+}
+
+header p a:hover {
+	text-decoration: underline;
+}
+
+/* General style for forms */
+form {
+	background-color: #fff;
+	padding: 20px;
+	border-radius: 6px;
+	box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+	margin-bottom: 25px;
+	width: 100%;
+	max-width: 600px;
+}
+
+form input[type="text"],
+form textarea,
+form select {
+	width: 100%;
+	padding: 10px;
+	margin-bottom: 10px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 1rem;
+}
+
+form textarea {
+	height: 120px;
+	resize: vertical;
+}
+
+form input[type="submit"] {
+	background-color: #8B3E2F; 
+	color: white;
+	padding: 10px 16px;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-weight: bold;
+	transition: background-color 0.3s ease;
+}
+
+form input[type="submit"]:hover {
+	background-color: #732e22;
+}
+
+/* Error, success messages */
+h3.error {
+	color: #d9534f;
+}
+
+h3.success {
+	color: #5cb85c;
+}
+
+
+/* Tags */
+label {
+	display: inline-block;
+	margin: 10px 0 5px;
+	color: #8B3E2F;
+	font-weight: bold;
+}
+
+
+/* Side-by-side form container */
+.form-wrapper {
+	display: flex;
+	gap: 30px;
+	margin-top: 20px;
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+
+/* Ensure both forms have the same style */
+.form-wrapper .category-form,
+.form-wrapper .blog-form {
+	flex: 1;
+	min-width: 280px;
+}
+
+/* Optional adjustments to maintain consistency */
+.category-form form,
+.blog-form form {
+	background-color: #fff;
+	padding: 20px;
+	border-radius: 6px;
+	box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+
+.login-form fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+}
+
+.login-form fieldset legend {
+    font-weight: bold;
+    color: #8B3E2F;
+    margin-right: 15px;
+    font-size: 1.2rem;
+    white-space: nowrap;
+}
+
+.login-form input.short {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 1.1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+
+.login-form input[type="submit"] {
+    padding: 12px 24px;
+    font-size: 1.15rem;
+    background-color: #8B3E2F;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.login-form input[type="submit"]:hover {
+    background-color: #732e22;
+}
+
+.login-form form {
+    display: flex;
+    flex-direction: column; 
+    gap: 10px;
+    padding: 20px 25px;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+    max-width: 700px;
+    width: 100%;
+}
+
+.login-form .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.login-form .error {
+    color: red;
+    font-size: 1rem;
+    margin-top: 4px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; 
+    gap: 8px; 
+}
+.login-form p {
+    margin: 0;
+}
+
+.publishContent {
+    position: relative;
+    padding-top: 30px;
+}
+
+.categoryLabel {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
