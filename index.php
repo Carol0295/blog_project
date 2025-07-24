@@ -37,11 +37,35 @@
 
 // if(DEBUG_V)	    echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$_SESSION<br>". print_r($_SESSION, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
 
+                #*******************************************#
+                #********** CHECK FOR VALID LOGIN **********#
+                #*******************************************#
+
+                if( isset($_SESSION['ID']) === false || $_SESSION['IPADDRESS'] !== $_SERVER['REMOTE_ADDR'] ){
+                    // Fehlerfall (Benutzer ist NICHT eingeloggt)
+if(DEBUG)	        echo "<p class='debug auth err'><b>Line " . __LINE__ . "</b>: Benutzer ist nicht eingeloggt <i>(" . basename(__FILE__) . ")</i></p>\n";
+                    session_destroy();
+                    $loggedIn = false;
+                    
+                } else {
+                    // Erfolgsfall (Benutzer ist eingeloggt)
+if(DEBUG)           echo "<p class='debug auth ok'><b>Line " . __LINE__ . "</b>: Benutzer ist eingeloggt <i>(" . basename(__FILE__) . ")</i></p>\n";
+                    session_regenerate_id(true);
+                    $userID = $_SESSION['ID'];
+
+if(DEBUG_V)	        echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: Eingeloggt mit \$userID: $userID <i>(" . basename(__FILE__) . ")</i></p>\n";
+                    $loggedIn = true;
+
+
+                } // END CHECK FOR VALID LOGIN
+
+
 #**************************************************************************************#
 
 				#*********************************************#
 				#********** FETCH CATEGORIES FROM DB *********#
 				#*********************************************# 
+if(DEBUG)	echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Fetching Kategorien aus der DB <i>(" . basename(__FILE__) . ")</i></p>\n";
 
                 // Schritt 1 DB: DB-Verbindung herstellen
                 $PDO = dbConnect('blogprojekt');
@@ -64,8 +88,8 @@
 if(DEBUG) 			echo "<p class='debug db err'><b>Line " . __LINE__ . "</b>: ERROR: " . $error->GetMessage() . "<i>(" . basename(__FILE__) . ")</i></p>\n";
                 }
 
-                $categoriesArr = $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
-// if(DEBUG_V)	    echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$categoriesArr<br>". print_r($categoriesArr, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
+                $categoriesArray = $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
+// if(DEBUG_V)	    echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$categoriesArray<br>". print_r($categoriesArray, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
 
 
                 // Schritt 4 DB: Ergebnis der DB-Operation auswerten und schließen der Datenbankverbindung
@@ -83,14 +107,14 @@ if(DEBUG) 			echo "<p class='debug db err'><b>Line " . __LINE__ . "</b>: ERROR: 
 if(DEBUG)	        echo "<p class='debug hint'><b>Line " . __LINE__ . "</b>: URL-Parameter 'action' wurde übergeben <i>(" . basename(__FILE__) . ")</i></p>\n";
 // if(DEBUG_V)	echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$_GET<br>". print_r($_GET, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
 
-
+if(DEBUG)		    echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Werte werden ausgelesen und entschärft... <i>(" . basename(__FILE__) . ")</i></p>\n";
                     // Schritt 2 URL: Parameterwert auslesen, entschärfen, DEBUG-Ausgaben
                     $action = sanitizeString($_GET['action']);
 
                     #********** PROCESS LOGOUT **********#
                     
                     if( $action === 'logout' ){
-
+if(DEBUG)	            echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Processing logout... <i>(" . basename(__FILE__) . ")</i></p>\n";
                         // 1. Leere Session Datei löschen
                         session_destroy();
 
@@ -101,18 +125,67 @@ if(DEBUG)	        echo "<p class='debug hint'><b>Line " . __LINE__ . "</b>: URL-
                         exit();
 
                     } elseif( $action === 'showCategory' ){
-                        
+
                         // PROCESS CATEGORY PARAMETER
                         if( isset( $_GET['id'] ) === true ){
+if(DEBUG)	                echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Kategorie filter wird verarbeitet...  <i>(" . basename(__FILE__) . ")</i></p>\n";
+
+if(DEBUG)		            echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Werte werden ausgelesen und entschärft... <i>(" . basename(__FILE__) . ")</i></p>\n";
                             // Schritt 2 URL: Parameterwert auslesen, entschärfen, DEBUG-Ausgaben
                             $filterCategoryID = sanitizeString($_GET['id']);
 if (DEBUG)                  echo "<p class='debug hint'><b>Line " . __LINE__ . "</b>: Kategorie-ID übergeben: $filterCategoryID</p>\n";
                         } // END PROCESS CATEGORY PARATEMER
 
-                    } // END PROCESS LOGOUT OR URL WITH CATEGORY
-                    
-                } 
-                 // END PROCESS URL PARAMETERS
+                        #*********** EDIT/DELETE POST PROCESS **********#
+                        // Schritt 1 URL: Prüfen, ob URL-Parameter übergeben wurde
+                    } elseif( ($action === 'edit' || $action === 'delete') && $loggedIn === true ) {
+
+                        if( isset($_GET['postId']) === true ){
+                            // Schritt 2 URL: Parameterwert auslesen, entschärfen, DEBUG-Ausgaben
+                            $blogIDToProcess = sanitizeString($_GET['postId']);
+if(DEBUG_V)	                echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: \$blogIDToProcess: $blogIDToProcess <i>(" . basename(__FILE__) . ")</i></p>\n";
+                            
+                            #*********** DELETE POST PROCESS START **********#
+                            if( $action === 'delete' ){
+if(DEBUG)	                    echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: DELETE process wird gestartet... <i>(" . basename(__FILE__) . ")</i></p>\n";
+                                $PDO = dbConnect('blogprojekt');
+
+                                $sql = "DELETE FROM blogs WHERE blogID = :blogID";
+                                
+                                $placeholders= [
+                                    'blogID' => $blogIDToProcess
+                                ];
+
+                                try{
+                                    $PDOStatement = $PDO->prepare($sql);
+
+                                    $PDOStatement->execute($placeholders);
+                                } catch (PDOException $error) {
+if(DEBUG) 			                echo "<p class='debug db err'><b>Line " . __LINE__ . "</b>: ERROR: " . $error->GetMessage() . "<i>(" . basename(__FILE__) . ")</i></p>\n";
+                                }
+
+                                $rowCount = $PDOStatement->rowCount();
+if(DEBUG_V)				        echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: \$rowCount: $rowCount <i>(" . basename(__FILE__) . ")</i></p>\n";
+
+                                if( $rowCount === 0 ){
+                                    // Fehlerfall Kein Datensatz wurde gelöscht.
+if(DEBUG)					        echo "<p class='debug hint'><b>Line " . __LINE__ . "</b>: Es wurden keine Datensätze gelöscht <i>(" . basename(__FILE__) . ")</i></p>\n";
+
+                                    $info = 'Es wurden keine Datensätze gelöscht';
+                                } else {
+                                    // Erfolgsfall 
+if(DEBUG)					        echo "<p class='debug ok'><b>Line " . __LINE__ . "</b>: $rowCount Posts wurden erfolgreich gelöscht. <i>(" . basename(__FILE__) . ")</i></p>\n";
+                                    // Erfolgsmeldung für User
+                                    $success = "$rowCount Posts wurden erfolgreich gelöscht.";
+
+                                    // Schließen der DB-Verbindung
+                                    dbClose($PDO, $PDOStatement);
+
+                                }
+                            } // END DELETE POST PROCESS 
+                        } // END PROCESS POST-ID
+                    } // BRANCHING END
+                } // END PROCESS URL PARAMETERS
 
 
 #********************************************************************************************#
@@ -120,6 +193,7 @@ if (DEBUG)                  echo "<p class='debug hint'><b>Line " . __LINE__ . "
                     #********** FETCH POSTS FROM DB *********#
                     #****************************************# 
 
+if(DEBUG)	        echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Fetching Blog Beiträge aus der Datenbank... <i>(" . basename(__FILE__) . ")</i></p>\n";
                     // Schritt 1 DB: DB-Verbindung herstellen
                     $PDO = dbConnect('blogprojekt');
 
@@ -138,8 +212,6 @@ if (DEBUG)                  echo "<p class='debug hint'><b>Line " . __LINE__ . "
 
                     $sql .= " ORDER BY blogDate DESC";
                     
-// if(DEBUG_V)	echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: \$sql: $sql <i>(" . basename(__FILE__) . ")</i></p>\n";
-
                     // Schritt 3 DB: Prepared Statements
                     try {
                         // Prepare: SQL-Statement vorbereiten
@@ -153,36 +225,13 @@ if (DEBUG)                  echo "<p class='debug hint'><b>Line " . __LINE__ . "
 if(DEBUG) 			    echo "<p class='debug db err'><b>Line " . __LINE__ . "</b>: ERROR: " . $error->GetMessage() . "<i>(" . basename(__FILE__) . ")</i></p>\n";
                     }
 
-                    $postsArr = $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
-// if(DEBUG_V)	        echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$postsArr<br>". print_r($postsArr, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
+                    $postsArray = $PDOStatement->fetchAll(PDO::FETCH_ASSOC);
+// if(DEBUG_V)	        echo "<pre class='debug value'><b>Line " . __LINE__ . "</b>: \$postsArray<br>". print_r($postsArray, true) . "<i>(" . basename(__FILE__) . ")</i>:</pre>\n";
 
 
                     // Schritt 4 DB: Ergebnis der DB-Operation auswerten und schließen der Datenbankverbindung
                     dbClose( $PDO, $PDOStatement );
 
-
-#**************************************************************************************#
-
-				#*******************************************#
-                #********** CHECK FOR VALID LOGIN **********#
-                #*******************************************#
-
-                if( isset($_SESSION['ID']) === false || $_SESSION['IPADDRESS'] !== $_SERVER['REMOTE_ADDR'] ){
-                    // Fehlerfall (Benutzer ist NICHT eingeloggt)
-if(DEBUG)	        echo "<p class='debug err'><b>Line " . __LINE__ . "</b>: Benutzer ist nicht eingeloggt <i>(" . basename(__FILE__) . ")</i></p>\n";
-                    session_destroy();
-                    $loggedIn = false;
-                    
-                } else {
-                    // Erfolgsfall (Benutzer ist eingeloggt)
-if(DEBUG)           echo "<p class='debug ok'><b>Line " . __LINE__ . "</b>: Benutzer ist eingeloggt <i>(" . basename(__FILE__) . ")</i></p>\n";
-                    session_regenerate_id(true);
-                    $userID = $_SESSION['ID'];
-
-                    $loggedIn = true;
-
-if(DEBUG_V)	        echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: \$userID: $userID <i>(" . basename(__FILE__) . ")</i></p>\n";
-                }
 
 #**************************************************************************************#
 
@@ -199,6 +248,7 @@ if(DEBUG_V)	        echo "<p class='debug value'><b>Line " . __LINE__ . "</b>: \
                 if( isset( $_POST['logginForm']) === true ){
 if(DEBUG)			echo "<p class='debug'>🧻 <b>Line " . __LINE__ . "</b>: Formular 'logginForm' wurde abgeschickt. <i>(" . basename(__FILE__) . ")</i></p>\n";
 
+if(DEBUG)		    echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Werte werden ausgelesen und entschärft... <i>(" . basename(__FILE__) . ")</i></p>\n";
                     // Schritt 2 FORM: Werte auslesen, entschärfen, DEBUG-Ausgabe
                     $userEmail      = sanitizeString($_POST['f1']);
                     $userPassword   = sanitizeString($_POST['f2']);
@@ -236,17 +286,12 @@ if(DEBUG)				echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Werte wer
 						#***********************************#
 						
 						#********** 1. FETCH USER DATA FROM DB **********#
-if(DEBUG)				echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Lese Userdaten aus DB auslesen... <i>(" . basename(__FILE__) . ")</i></p>\n";
+if(DEBUG)				echo "<p class='debug'>📑 <b>Line " . __LINE__ . "</b>: Lese Userdaten aus DB... <i>(" . basename(__FILE__) . ")</i></p>\n";
 
                         // Schritt 1 DB: DB-Verbindung herstellen
                         $PDO = dbConnect('blogprojekt');
 
                         // Schritt 2 DB: SQL und placeholders 
-                        // $sql = "SELECT userID, userFirstName, userLastName, userEmail, userCity, userPassword,
-                        //                 catLabel
-                        //         FROM users
-                        //         INNER JOIN categories USING(catID)
-                        //         WHERE userEmail = :userEmail";
                         $sql = "SELECT userID, userFirstName, userLastName, userEmail, userCity, userPassword
                                 FROM users
                                 WHERE userEmail = :userEmail";
@@ -337,6 +382,9 @@ if(DEBUG)	echo "<p class='debug auth ok'><b>Line " . __LINE__ . "</b>: Session i
 		<link rel="stylesheet" href="./css/main.css">
 		<link rel="stylesheet" href="./css/debug.css">
 
+        <link rel="stylesheet" href="fontawesome/css/all.min.css">
+
+
 		<title>PHP-Projekt Blog</title>
 
 	</head>
@@ -371,10 +419,24 @@ if(DEBUG)	echo "<p class='debug auth ok'><b>Line " . __LINE__ . "</b>: Session i
 		
         <nav><a href="./">Alle Einträge anzeigen</a></nav><br>
 		
+        <!-- -------- USER MESSAGES START -------- -->
+		<?php if( isset($error) === true ): ?>
+		<h3 class="error"><?= $error ?></h3>
+		<?php elseif( isset($success) === true ): ?>
+		<h3 class="success"><?= $success ?></h3>
+		<?php elseif( isset($info) === true ): ?>
+		<h3 class="info"><?= $info ?></h3>
+		<?php endif ?>
+		<!-- -------- USER MESSAGES END -------- -->
+
         <div class="content-wrapper">
             <main class="posts">
-                <?php foreach( $postsArr AS $post ): ?>
+                <?php foreach( $postsArray AS $post ): ?>
                     <article class="publishContent">
+                        <?php if($loggedIn === true): ?>
+                            <editor><a href="?action=edit&postId=<?= $post['blogID']?>"><i class="fa-solid fa-pen"></i></a></editor>
+                            <editor><a href="?action=delete&postId=<?= $post['blogID']?>"><i class="fa-solid fa-trash"></i></a></editor>
+                        <?php endif ?>
                         <label for="categoryName" class="categoryLabel"> Kategorie: <?= $post['catLabel'] ?></label>
                         <h3><?= $post['blogHeadline']; ?></h3>
 
@@ -390,7 +452,7 @@ if(DEBUG)	echo "<p class='debug auth ok'><b>Line " . __LINE__ . "</b>: Session i
 
             <aside class="categories">
                 <h2>Kategorien</h2>
-                <?php foreach($categoriesArr AS $categories): ?> 
+                <?php foreach($categoriesArray AS $categories): ?> 
                     <div class="<?php if($categories['catID'] == $filterCategoryID) echo 'selectedCategory' ?>">
                         <a href="?action=showCategory&id=<?= $categories['catID'] ?>"><?= $categories['catLabel']?></a>
                     </div>
